@@ -48,6 +48,7 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
                   src={session.user.image}
                   alt="Avatar"
                   className="w-8 h-8 rounded-full border border-gray-200/50"
+                  referrerPolicy="no-referrer"
                 />
               )}
               <button
@@ -91,6 +92,7 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
                     src={session.user.image}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full border border-gray-200/50"
+                    referrerPolicy="no-referrer"
                   />
                 )}
                 <span className="text-sm text-gray-500">{session.user?.name}</span>
