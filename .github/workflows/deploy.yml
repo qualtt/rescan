@@ -31,7 +31,7 @@ jobs:
             touch .env
             
             # Build and restart the container
-            docker-compose up -d --build
+            docker compose up -d --build
             
             # Run Prisma migrations inside the container
-            docker-compose exec -T app npx prisma db push
+            docker compose exec -T app npx prisma db push
