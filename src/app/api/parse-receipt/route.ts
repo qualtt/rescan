@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
           Key: objectKey,
           Body: buffer,
           ContentType: mimeType,
+          ACL: 'public-read',
         }));
         const endpoint = process.env.S3_ENDPOINT || `https://${bucket}.s3.${process.env.S3_REGION}.amazonaws.com`;
         // Handle path style vs virtual hosted style depending on endpoint
