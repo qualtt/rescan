@@ -18,7 +18,7 @@ if (process.env.GEMINI_PROXY_URL) {
   
   globalThis.fetch = (url, init) => {
     if (url && url.toString().includes('googleapis.com')) {
-      return nodeFetch(url as any, { ...init, agent }) as any;
+      return nodeFetch(url as any, { ...init, agent } as any) as any;
     }
     return originalFetch(url, init);
   };
