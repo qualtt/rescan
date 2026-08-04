@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const session = await getServerSession(authOptions);
     const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
     
@@ -14,7 +15,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     // Remove user from all groups
     await prisma.user.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         groups: { set: [] }
       }
