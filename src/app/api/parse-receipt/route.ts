@@ -8,6 +8,21 @@ import path from 'path';
 
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from '@/lib/s3';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import nodeFetch from 'node-fetch';
+
+// Setup proxy for Gemini if configured
+if (process.env.GEMINI_PROXY_URL) {
+  const originalFetch = globalThis.fetch;
+  const agent = new SocksProxyAgent(process.env.GEMINI_PROXY_URL);
+  
+  globalThis.fetch = (url, init) => {
+    if (url && url.toString().includes('googleapis.com')) {
+      return nodeFetch(url as any, { ...init, agent }) as any;
+    }
+    return originalFetch(url, init);
+  };
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
