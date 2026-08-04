@@ -16,13 +16,21 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user }) {
-      const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      let adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      // Strip accidental quotes from docker .env
+      if (adminEmail?.startsWith('"') && adminEmail?.endsWith('"')) adminEmail = adminEmail.slice(1, -1);
+      if (adminEmail?.startsWith("'") && adminEmail?.endsWith("'")) adminEmail = adminEmail.slice(1, -1);
+      
       const userEmail = user.email?.trim().toLowerCase();
       
+      console.log(`[AUTH ATTEMPT] Trying to login with: '${userEmail}'`);
+      console.log(`[AUTH CONFIG] Server ADMIN_EMAIL is: '${adminEmail}'`);
+
       if (!userEmail) return false;
 
       // Allow admin unconditionally
       if (adminEmail && userEmail === adminEmail) {
+        console.log(`[AUTH SUCCESS] Admin login approved`);
         return true;
       }
 
