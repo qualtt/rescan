@@ -67,4 +67,4 @@ jobs:
             docker image prune -af
             
             # Run Prisma migrations inside the container
-            docker compose exec -T app npx prisma@6.19.3 db push
+            docker compose exec -T -u root app npx prisma@6.19.3 db push
