@@ -124,19 +124,19 @@ export function SettingsClient({
       {/* Allowed Emails Section */}
       <div>
         <h2 className="text-xl font-semibold text-gray-800 mb-6">{t.settings.accessControl}</h2>
-        <form onSubmit={handleAddEmail} className="flex gap-3 mb-6">
+        <form onSubmit={handleAddEmail} className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="email"
             value={newEmail}
             onChange={e => setNewEmail(e.target.value)}
             placeholder={t.settings.addEmailPlaceholder}
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-800"
+            className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-800"
             required
           />
           <button
             type="submit"
             disabled={isAdding}
-            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="w-full sm:w-auto justify-center bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isAdding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
             {t.settings.addEmailButton}
@@ -149,7 +149,7 @@ export function SettingsClient({
           ) : (
             emails.map(email => (
               <div key={email.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <span className="font-medium text-gray-700">{email.email}</span>
+                <span className="font-medium text-gray-700 truncate mr-2">{email.email}</span>
                 <button
                   onClick={() => handleDeleteEmail(email.id)}
                   disabled={deletingId === email.id}
@@ -169,19 +169,19 @@ export function SettingsClient({
       <div>
         <h2 className="text-xl font-semibold text-gray-800 mb-6">Участники группы</h2>
         <p className="text-gray-500 text-sm mb-6">Пользователи в этом списке будут видеть все чеки вашей группы.</p>
-        <form onSubmit={handleAddMember} className="flex gap-3 mb-6">
+        <form onSubmit={handleAddMember} className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="email"
             value={newMemberEmail}
             onChange={e => setNewMemberEmail(e.target.value)}
             placeholder="Email участника группы..."
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-800"
+            className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-800"
             required
           />
           <button
             type="submit"
             disabled={isAddingMember}
-            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="w-full sm:w-auto justify-center bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isAddingMember ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
             Добавить
@@ -194,9 +194,9 @@ export function SettingsClient({
           ) : (
             groupMembers.map(member => (
               <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-700">{member.email}</span>
-                  {member.name && <span className="text-xs text-gray-400">{member.name}</span>}
+                <div className="flex flex-col min-w-0 mr-2">
+                  <span className="font-medium text-gray-700 truncate">{member.email}</span>
+                  {member.name && <span className="text-xs text-gray-400 truncate">{member.name}</span>}
                 </div>
                 <button
                   onClick={() => handleDeleteMember(member.id)}
