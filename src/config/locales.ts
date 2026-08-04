@@ -39,6 +39,14 @@ export const t = {
     deleteDraft: 'Удалить черновик',
     confirmDelete: 'Вы уверены, что хотите удалить этот черновик?'
   },
+  settings: {
+    title: 'Настройки',
+    subtitle: 'Управление доступом и параметрами приложения',
+    accessControl: 'Доступ (Белый список)',
+    addEmailPlaceholder: 'email@example.com',
+    addEmailButton: 'Разрешить доступ',
+    emptyEmails: 'Белый список пуст. Только администратор имеет доступ.',
+  },
   alerts: {
     saved: 'Успешно сохранено!',
     saveError: 'Не удалось сохранить. Убедитесь, что вы авторизованы.',

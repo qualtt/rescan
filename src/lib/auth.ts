@@ -16,13 +16,31 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user }) {
-      const allowedEmails = process.env.ALLOWED_EMAILS?.split(',').map(e => e.trim().toLowerCase());
-      if (allowedEmails && allowedEmails.length > 0) {
-        if (!user.email || !allowedEmails.includes(user.email.toLowerCase())) {
-          return false; // Deny access
-        }
+      const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      const userEmail = user.email?.trim().toLowerCase();
+      
+      if (!userEmail) return false;
+
+      // Allow admin unconditionally
+      if (adminEmail && userEmail === adminEmail) {
+        return true;
       }
-      return true;
+
+      // Check AllowedEmail table
+      const allowed = await prisma.allowedEmail.findUnique({
+        where: { email: userEmail }
+      });
+
+      // If they are explicitly allowed, let them in
+      if (allowed) return true;
+
+      // If no admin email is set, deny access (fallback to safe-by-default)
+      if (!adminEmail) {
+        console.warn('Login denied: No ADMIN_EMAIL set and user not in allowed list');
+        return false;
+      }
+
+      return false; // Deny access
     },
     async session({ session, token }) {
       if (session.user && token.sub) {

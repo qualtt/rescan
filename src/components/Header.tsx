@@ -4,8 +4,9 @@ import { signIn, signOut, useSession } from 'next-auth/react'
 import { LogIn, LogOut, Receipt } from 'lucide-react'
 import Link from 'next/link'
 import { t } from '@/config/locales'
+import { Settings } from 'lucide-react'
 
-export function Header() {
+export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
   const { data: session } = useSession()
 
   return (
@@ -21,6 +22,12 @@ export function Header() {
           <div className="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-500">
             <Link href="/" className="hover:text-gray-900 transition-colors">{t.app.splitBill}</Link>
             <Link href="/analytics" className="hover:text-gray-900 transition-colors">{t.app.analytics}</Link>
+            {isAdmin && (
+              <Link href="/settings" className="hover:text-gray-900 transition-colors flex items-center gap-1">
+                <Settings className="w-4 h-4" />
+                {t.settings?.title || 'Настройки'}
+              </Link>
+            )}
           </div>
         </div>
 

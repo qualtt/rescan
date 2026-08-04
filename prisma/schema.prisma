@@ -98,3 +98,9 @@ model Item {
   assignedToId String?     // If null, it's a "Shared" item
   assignedTo   Participant? @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
 }
+
+model AllowedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

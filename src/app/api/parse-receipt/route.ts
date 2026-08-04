@@ -6,6 +6,9 @@ import { authOptions } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { s3Client } from '@/lib/s3';
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
@@ -58,25 +61,19 @@ export async function POST(req: NextRequest) {
         summary[id].items[item.name] = (summary[id].items[item.name] || 0) + 1;
       });
 
-      const buildTopN = (map: Record<string, number>, n = 3) => 
-        Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n).map(e => e[0]).join(', ');
-
-      historyText = `\n\nParticipants:\n` + group.participants.map(p => `- ID: "${p.id}" (Name: ${p.name})`).join('\n') + `\n\nHistory Summary (what people usually buy):\n`;
-      group.participants.forEach(p => {
-        const cats = buildTopN(summary[p.id].categories);
-        const topItems = buildTopN(summary[p.id].items);
-        if (cats) historyText += `- ${p.name} (ID: ${p.id}) often buys categories: [${cats}] and specific items: [${topItems}]\n`;
+      historyText = `\n\nHistory Summary for Auto-assignment (Assign to these IDs if confident):\n`;
+      Object.entries(summary).forEach(([id, data]) => {
+        const name = id === 'SHARED' ? 'Shared' : group!.participants.find(p => p.id === id)?.name;
+        const topCats = Object.entries(data.categories).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join(', ');
+        const topItems = Object.entries(data.items).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join(', ');
+        historyText += `- ID: ${id} (Name: ${name}) -> Frequent Cats: [${topCats}], Frequent Items: [${topItems}]\n`;
       });
-      const sharedCats = buildTopN(summary['SHARED'].categories);
-      if (sharedCats) historyText += `- Shared (null) often includes categories: [${sharedCats}]\n`;
-    }
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
     }
 
     const imageUrls: string[] = [];
     const parts: any[] = [];
+
+    const bucket = process.env.S3_BUCKET;
 
     for (const image of images) {
       const base64Data = image.split(',')[1];
@@ -84,12 +81,32 @@ export async function POST(req: NextRequest) {
       
       const extension = mimeType.split('/')[1] || 'jpg';
       const filename = `receipt-${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
-      const filePath = path.join(uploadDir, filename);
+      const objectKey = `rescan/images/${filename}`;
       
       const buffer = Buffer.from(base64Data, 'base64');
-      fs.writeFileSync(filePath, buffer);
       
-      imageUrls.push(`/uploads/${filename}`);
+      if (bucket) {
+        await s3Client.send(new PutObjectCommand({
+          Bucket: bucket,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: mimeType,
+        }));
+        const endpoint = process.env.S3_ENDPOINT || `https://${bucket}.s3.${process.env.S3_REGION}.amazonaws.com`;
+        // Handle path style vs virtual hosted style depending on endpoint
+        const isPathStyle = !endpoint.includes('.amazonaws.com') && !endpoint.includes('.yandexcloud.net');
+        const url = isPathStyle ? `${endpoint}/${bucket}/${objectKey}` : `${endpoint}/${objectKey}`;
+        imageUrls.push(url);
+      } else {
+        // Fallback to local if no bucket is configured
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, buffer);
+        imageUrls.push(`/uploads/${filename}`);
+      }
       
       parts.push({
         inlineData: {
