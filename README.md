@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rescan 🧾
 
-## Getting Started
+Rescan — это современное веб-приложение для сканирования, распознавания и организации чеков из магазинов. Оно автоматически извлекает данные из скриншотов чеков с помощью ИИ, распределяет покупки по категориям и позволяет вести совместный учет расходов в группах.
 
-First, run the development server:
+## Основные возможности ✨
+- 📸 **Умное распознавание (AI)**: Загружайте скриншоты или фотографии чеков, и ИИ автоматически извлечет названия товаров, цены и категории.
+- 👥 **Совместный доступ**: Добавляйте участников в свою группу по email, чтобы вместе просматривать чеки и аналитику.
+- 📊 **Аналитика расходов**: Наглядная статистика, общие суммы трат и разбивка по категориям.
+- ☁️ **Облачное хранилище (S3)**: Надежное хранение оригиналов чеков в любом S3-совместимом хранилище.
+- 🛡️ **Контроль доступа**: Панель администратора для управления разрешенными email-адресами.
+- 🔄 **Автоматические бекапы**: Ежедневное автоматическое копирование базы данных в S3 с очисткой старых копий (старше 30 дней).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Стек технологий 🛠️
+- **Фреймворк**: Next.js 15 (App Router)
+- **База данных**: SQLite + Prisma ORM
+- **Авторизация**: NextAuth.js (Google OAuth)
+- **Стилизация**: Tailwind CSS
+- **Деплой**: Docker Compose + GitHub Actions (CI/CD)
+
+## Настройка окружения (.env) 🔐
+Для локального запуска и работы на сервере потребуется файл `.env` в корне проекта:
+```env
+NEXTAUTH_URL="http://localhost:3000" # или ваш домен для продакшена
+NEXTAUTH_SECRET="your-secret"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+ADMIN_EMAILS="admin@example.com" # через запятую
+
+S3_ENDPOINT="https://s3.example.com"
+S3_REGION="ru1"
+S3_BUCKET="your-bucket-name"
+S3_ACCESS_KEY_ID="your-access-key"
+S3_SECRET_ACCESS_KEY="your-secret-key"
+
+CRON_SECRET="secret-for-backups"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Локальный запуск 💻
+1. Установите зависимости:
+   ```bash
+   npm install
+   ```
+2. Подготовьте базу данных:
+   ```bash
+   npx prisma db push
+   ```
+3. Запустите сервер для разработки:
+   ```bash
+   npm run dev
+   ```
+4. Откройте [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Развертывание (Деплой) 🚀
+Проект настроен для автоматического деплоя через **GitHub Actions** на ваш VPS (Ubuntu/Debian) при пуше в ветку `main`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Требования для сервера:**
+- Установленный Docker и Docker Compose.
+- Настроенный Nginx (проксирует порт 80/443 на порт 3000 контейнера).
+- SSL-сертификаты (например, Let's Encrypt).
 
-## Learn More
+В настройках репозитория на GitHub (`Settings -> Secrets and variables -> Actions`) необходимо добавить следующие секреты:
+- `SERVER_HOST`: IP адрес вашего сервера
+- `SERVER_USER`: Имя пользователя (например, root)
+- `SSH_PRIVATE_KEY`: Приватный SSH-ключ для доступа на сервер
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+При каждом обновлении ветки `main`, GitHub Action автоматически:
+1. Соберет новый образ приложения.
+2. Подключится к серверу по SSH.
+3. Скачает новый образ и перезапустит Docker-контейнер (`rescan-app-1`).
+4. Выполнит миграции базы данных внутри контейнера.
