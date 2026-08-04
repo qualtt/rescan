@@ -18,6 +18,13 @@ export default async function SettingsPage() {
     orderBy: { createdAt: 'desc' }
   });
 
+  const adminGroup = await prisma.group.findFirst({
+    where: { users: { some: { email: adminEmail } } },
+    include: { users: true }
+  });
+
+  const groupMembers = adminGroup?.users || [];
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
       <div>
@@ -26,8 +33,7 @@ export default async function SettingsPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">{t.settings.accessControl}</h2>
-        <SettingsClient initialEmails={allowedEmails} />
+        <SettingsClient initialEmails={allowedEmails} initialGroupMembers={groupMembers} />
       </div>
     </div>
   );
