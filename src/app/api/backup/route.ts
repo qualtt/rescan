@@ -35,6 +35,28 @@ export async function GET(req: NextRequest) {
       Body: buffer,
     }));
 
+    // Cleanup old backups (older than 30 days)
+    try {
+      const { ListObjectsV2Command, DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+      const listData = await s3Client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: 'rescan/backups/' }));
+      
+      if (listData.Contents) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        for (const item of listData.Contents) {
+          if (item.LastModified && item.LastModified < thirtyDaysAgo && item.Key) {
+            await s3Client.send(new DeleteObjectCommand({
+              Bucket: bucket,
+              Key: item.Key
+            }));
+          }
+        }
+      }
+    } catch (cleanupError) {
+      console.error('Failed to cleanup old backups:', cleanupError);
+    }
+
     return NextResponse.json({ success: true, file: objectKey });
   } catch (error: any) {
     console.error('Backup Error:', error);
