@@ -5,8 +5,37 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
   deploy:
+    needs: build-and-push-image
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Server
@@ -18,20 +47,24 @@ jobs:
           script: |
             cd ~/rescan || mkdir -p ~/rescan
             
-            # Clone or pull the latest code
-            if [ -d ".git" ]; then
-              git pull origin main
-            else
-              # If it's the first time, clone the repo
-              # Note: For private repos, you might need an access token or deploy key
-              git clone https://github.com/${{ github.repository }}.git .
-            fi
+            # Authenticate server to GHCR using the ephemeral GITHUB_TOKEN
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Ensure .env exists (user will upload it manually, but we don't want docker-compose to fail)
+            # Pull docker-compose.yml directly from the repo using curl
+            curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                 -H "Accept: application/vnd.github.v3.raw" \
+                 -s -L -o docker-compose.yml \
+                 https://api.github.com/repos/${{ github.repository }}/contents/docker-compose.yml
+            
+            # Ensure .env exists
             touch .env
             
-            # Build and restart the container
-            docker compose up -d --build
+            # Pull the new image and restart the container
+            docker compose pull
+            docker compose up -d
+            
+            # Clean up old images to save disk space
+            docker image prune -af
             
             # Run Prisma migrations inside the container
             docker compose exec -T app npx prisma db push
