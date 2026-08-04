@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/rescan || mkdir -p ~/rescan
+            
+            # Clone or pull the latest code
+            if [ -d ".git" ]; then
+              git pull origin main
+            else
+              # If it's the first time, clone the repo
+              # Note: For private repos, you might need an access token or deploy key
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+            
+            # Ensure .env exists (user will upload it manually, but we don't want docker-compose to fail)
+            touch .env
+            
+            # Build and restart the container
+            docker-compose up -d --build
+            
+            # Run Prisma migrations inside the container
+            docker-compose exec -T app npx prisma db push

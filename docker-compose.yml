@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the database file to persist data
+      - sqlite_data:/app/prisma
+      # Mount uploads directory to persist images
+      - uploads_data:/app/public/uploads
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+
+volumes:
+  sqlite_data:
+  uploads_data:
